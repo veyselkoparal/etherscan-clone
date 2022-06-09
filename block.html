@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Ethereum (ETH) Blockchain Explorer</title>
+
+    <link rel="shortcut icon" href="assets/images/favicon.ico" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/default.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/ether.theme.min.css">
+
+    <script src="assets/js/vendor/modernizr-3.6.0.min.js"></script>
+    <script src="assets/js/vendor/jquery-1.12.4.min.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+    <script src="assets/js/slick.min.js"></script>
+    <script src="assets/js/moment-with-locales.min.js"></script>
+    <script src="assets/js/jquery.nice-select.min.js"></script>
+    <script src="assets/js/main.js"></script>
+
+    <!-- SOCKET.IO -->
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js" integrity="sha384-7EyYLQZgWBi67fBtVxw60/OWl1kjsfrPFcaU0pp0nAh+i8FD068QogUvg85Ewy1k" crossorigin="anonymous"></script>
+    <script>let socket = io("http://www.luizapp.com:3080");</script>
+</head>
+
+<body>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            //MOMENT CONFIG
+            moment.locale(window.navigator.languages[0]);
+
+            //Get Params
+            var url_string = window.location.href;
+            var url = new URL(url_string);
+            let _block = url.searchParams.get("block");
+            document.title = "Block #" + _block + "- Ethereum (ETH) Blockchain Explorer"; 
+
+            //BLOK DETAY ISTEĞİ
+            socket.emit("getBlockDetail", {blocknumber: _block});
+        });
+
+
+
+        //BLOK DETAY
+        socket.on('getBlockDetail', function (data) {
+
+            if(data == null || data.type == "hata"){
+                $("#loading").hide();
+                $("#block404").show();
+                return false;
+            }
+
+            $("#blockTitle").html("#" + data.number);
+            $("#baseFeePerGas").html(data.baseFeePerGas + " (Gwei)");
+            $("#difficulty").html(addCommas(data.difficulty));
+            $("#extraData").html("(Hex:" + data.extraData + ")");
+            $("#gasLimit").html(addCommas(data.gasLimit));
+            $("#gasUsed").html(addCommas(data.gasUsed));
+            $("#hash").html(data.hash);
+            $("#miner").html(data.miner).attr("href", "#")
+            $("#nonce").html(data.nonce);
+            $("#number").html(data.number);
+            $("#parentHash").html(data.parentHash).attr("href", "block.html?block=" + data.parentHash);
+            $("#sha3Uncles").html(data.sha3Uncles);
+            $("#size").html(addCommas(data.size) + " bytes");
+            $("#stateRoot").html(data.stateRoot);
+            $("#timestamp").html(moment.unix(data.timestamp).fromNow() + " (" + moment.unix(data.timestamp).format("DD.MM.YYYY HH:mm:ss") +")");
+            $("#totalDifficulty").html(addCommas(data.totalDifficulty));
+
+            $("#transactions").attr("href", "#").html(data.transactions.length + " transactions")
+
+            let bplus = parseInt(data.number) + 1;
+            let bminus = parseInt(data.number) - 1;
+
+            $("#numberleft").attr("href","block.html?block=" + bminus);
+            $("#numberright").attr("href","block.html?block=" + bplus);
+                
+            setTimeout(function(){
+                $("#loading").hide();
+                $("#overview").show();
+            },200);
+        });
+
+
+
+        //SAYIYI VİRGÜLLE AYIRAN FONKSIYON
+        function addCommas(nStr) {
+            nStr += '';
+            var x = nStr.split('.');
+            var x1 = x[0];
+            var x2 = x.length > 1 ? '.' + x[1] : '';
+            var rgx = /(\d+)(\d{3})/;
+            while (rgx.test(x1)) {
+                x1 = x1.replace(rgx, '$1' + ',' + '$2');
+            }
+            return x1 + x2;
+        }          
+
+    </script>
+
+   
+    <!--====== HEADER KISMI ======-->
+    <header class="header-area">
+        <div class="header-nav">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-11">
+                        <div class="navigation">
+                            <nav class="navbar navbar-expand-lg navbar-light ">
+                                <a class="navbar-brand" href="index.html"><img src="assets/images/logo-etherscan.svg" style="height:35px;" alt=""></a> <!-- logo -->
+                                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                                    <span class="toggler-icon"></span>
+                                    <span class="toggler-icon"></span>
+                                    <span class="toggler-icon"></span>
+                                </button> <!-- navbar toggler -->
+                        
+                                <div class="collapse navbar-collapse sub-menu-bar" id="navbarSupportedContent">
+                                    <ul class="navbar-nav m-auto">
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="index.html"><i class="fa fa-home"></i> &nbsp&nbspHome</a>
+                                            <!-- <a class="nav-link active" href="index.html">Anasayfa <i class="fal fa-angle-down"></i></a>
+                                            <ul class="sub-menu">
+                                                <li><a href="index.html">1</a></li>
+                                                <li><a href="index-2.html">2</a></li>
+                                                <li><a href="index-3.html">3</a></li>
+                                            </ul> -->
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link active" href="#"><i class="fa fa-cubes"></i> &nbsp&nbspBlocks <i class="fa fa-angle-down"></i></a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="#"><i class="fa fa-exchange-alt"></i> &nbsp&nbspTransactions <i class="fa fa-angle-down"></i></a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="#"><i class="fa fa-coins"></i> &nbsp&nbspTokens <i class="fa fa-angle-down"></i></a>
+                                        </li>
+                                    </ul>
+                                </div> <!-- navbar collapse -->
+                            </nav>
+                        </div> <!-- navigation -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+
+<!--====== ORTA ALAN ======-->
+<section style="background-position: center;z-index:-1;padding-top:100px;width: 100%;background-image: url(assets/images/abstract-shapes-20.svg)">
+
+    <!--====== BILGI KARTLARI ======-->
+    <div class="container">
+
+    <div class="container py-3">
+        <div class="d-sm-flex align-items-center">
+            <div class="mb-2 mb-sm-0">
+                <h1 class="h4 mb-0" style="color: #f7f7f7;font-size: 30px;font-weight: 500;">Block <span style="font-size: 17px;color: #cbcbcb;" id="blockTitle"></span></h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" style="margin-bottom:70px">
+        <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center p-0">
+            <ul class="nav nav-custom nav-borderless nav_tabs1" id="nav_tabs" role="tablist">
+            <li class="nav-item"><a class="nav-link active" href="#overview" data-toggle="tab">Overview</a></li>
+            <li class="nav-item">
+                <a class="nav-link" href="#comments" data-toggle="tab"><span class="disqus-comment-count">Comments</span> </a>
+            </li>
+            </ul>
+        </div>
+        <div class="tab-content" style="min-height: 855px">
+
+            <img id="loading" src="assets/images/loading.svg" alt="Loading" style="position:absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);height:75px">
+            <img id="block404" src="assets/images/virtual-reality-ether.svg" alt="Loading" style="display:none;position:absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);height:75%">
+
+            <div class="tab-pane fade show active" id="overview" style="display: none" role="tabpanel" aria-labelledby="home-tab">
+            <div id="ContentPlaceHolder1_maintable" class="card-body">
+                <div class="row align-items-center mt-1">
+                <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>Block Height:</div>
+                <div class="col-md-9">
+                    <div class="d-flex">
+                    <span class="font-weight-sm-bold mr-2" id="number"> 0</span>
+                    <a class="btn btn-xs btn-icon btn-soft-info mr-1" href="" id="numberleft"><i class="fa fa-chevron-left btn-icon__inner"></i></a>
+                    <a class="btn btn-xs btn-icon btn-soft-info mr-1" href="" id="numberright"><i class="fa fa-chevron-right btn-icon__inner"></i></a>
+                    </div>
+                </div>
+                </div>
+                <hr class="hr-space" />
+                <div class="row align-items-center">
+                <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>Timestamp:</div>
+                <div class="col-md-9"><i class="far fa-clock small mr-1"></i><span id="timestamp"></span></div>
+                </div>
+                <hr class="hr-space mb-2" />
+                <div class="row align-items-center">
+                <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>Transactions:</div>
+                <div class="col-md-9"><a class="u-label u-label--value u-label--primary rounded my-1" href="txs.html?block=" id="transactions">0 transactions</a> in this block</div>
+                </div>
+                <hr class="hr-space mt-2" />
+                <div class="row align-items-center">
+                <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>Mined by:</div>
+                <div class="col-md-9"><a href="address.html?address=" id="miner" style="word-break: break-all;"></a></div>
+                </div>
+                <hr class="hr-space" />
+                <div class="row align-items-center">
+                <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>Uncles Reward:</div>
+                <div class="col-md-9">0</div>
+                </div>
+                <hr class="hr-space" />
+                <div class="row align-items-center">
+                <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>Difficulty:</div>
+                <div class="col-md-9" id="difficulty"></div>
+                </div>
+                <hr class="hr-space" />
+                <div class="row align-items-center">
+                <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>Total Difficulty:</div>
+                <div class="col-md-9" id="totalDifficulty"></div>
+                </div>
+                <hr class="hr-space" />
+                <div class="row align-items-center">
+                <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>Size:</div>
+                <div class="col-md-9" id="size"></div>
+                </div>
+                <hr class="hr-space" />
+                <div class="row align-items-center">
+                <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>Gas Used:</div>
+                <div class="col-md-9 d-flex align-items-center" id="gasUsed">0</div>
+                </div>
+                <hr class="hr-space hr-gasTarget-bottom" />
+                <div class="row align-items-center">
+                <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>Gas Limit:</div>
+                <div class="col-md-9" id="gasLimit"></div>
+                </div>
+                <hr class="hr-space" />
+                <div class="row align-items-center">
+                <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>Base Fee Per Gas:</div>
+                <div class="col-md-9" id="baseFeePerGas"></div>
+                </div>
+                <hr class="hr-space" />
+                <div class="row align-items-center">
+                <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>Extra Data:</div>
+                <div class="col-md-9" id="extraData"></div>
+                </div>
+                <hr class="hr-space" />
+                <div class="row align-items-center">
+                    <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>Hash:</div>
+                    <div class="col-md-9" id="hash"></div>
+                </div>
+                <hr class="hr-space" />
+                <div class="row align-items-center">
+                    <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>Parent Hash:</div>
+                    <div class="col-md-9">
+                    <a href="/block/" id="parentHash" style="word-break: break-all;"></a>
+                    </div>
+                </div>
+                <hr class="hr-space" />
+                <div class="row align-items-center">
+                    <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>Sha3Uncles:</div>
+                    <div class="col-md-9" id="sha3Uncles"></div>
+                </div>
+                <hr class="hr-space" />
+                <div class="row align-items-center">
+                    <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>StateRoot:</div>
+                    <div class="col-md-9" id="stateRoot"></div>
+                </div>
+                <hr class="hr-space" />
+                <div class="row align-items-center">
+                    <div class="col-md-3 font-weight-bold font-weight-sm-normal mb-1 mb-md-0e"><i class="fa fa-question-circle text-secondary mr-1"></i>Nonce:</div>
+                    <div class="col-md-9" id="nonce"></div>
+                </div>
+            </div>
+            </div>
+
+            <div class="tab-pane fade" id="comments" role="tabpanel" aria-labelledby="comments-tab">
+            <div class="card-body">Yorum Bulunamadı<br /></div>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    </div>
+    <!--====== BLOK & TRANSACTION ALANI ======-->
+</section>
+<!--====== ORTA BLOK ======-->
+
+
+<!--====== FOOTER KISMI ======-->
+<footer class="footer-area">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-3 col-md-6 col-sm-6">
+                <div class="footer-list mt-30">
+                    <h4 class="title">Menu</h4>
+                    <ul>
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Team</a></li>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Blog</a></li>
+                    </ul>
+                </div>                
+            </div>
+            <div class="col-lg-3 col-md-6 col-sm-6">
+                <div class="footer-list mt-30">
+                    <h4 class="title">PAPERS</h4>
+                    <ul>
+                        <li><a href="#">White Paper</a></li>
+                        <li><a href="#">Technical Paper</a></li>
+                        <li><a href="#">One Pager</a></li>
+                    </ul>
+                </div>                
+            </div>
+            <div class="col-lg-3 col-md-6 col-sm-6">
+                <div class="footer-list mt-30">
+                    <h4 class="title">legal</h4>
+                    <ul>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms and Conditions</a></li>
+                        <li><a href="#">Cookie Policy</a></li>
+                    </ul>
+                </div>                
+            </div>
+            <div class="col-lg-3 col-md-6 col-sm-6">
+                <div class="footer-list mt-30">
+                    <h4 class="title">Subscribe</h4>
+                    <form action="#">
+                        <div class="input-box">
+                            <input type="text" style="background-color:#21325b !important;color:white" placeholder="Email Address">
+                            <button><i class="fa fa-arrow-right" style="color:white"></i></button>
+                        </div>
+                    </form>
+                </div>                
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="footer-copyright d-flex justify-content-between align-items-center">
+                    <img src="assets/images/logo-etherscan.svg" alt="" style="height:50px">
+                    <ul class="order-1 order-sm-2">
+                        <li><a href="#"><i class="fab fa-facebook-square"></i></a></li>
+                        <li><a href="#"><i class="fab fa-twitter"></i></a></li>
+                        <li><a href="#"><i class="fab fa-linkedin"></i></a></li>
+                        <li><a href="#"><i class="fab fa-dribbble"></i></a></li>
+                        <li><a href="#"><i class="fab fa-github"></i></a></li>
+                        <li><a href="#"><i class="fa fa-paper-plane"></i></a></li>
+                        <li><a href="#"><i class="fab fa-btc"></i></a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- <div class="banefits-color-2">
+        <img src="assets/images/shape/color-bg-4.png" alt="">
+    </div> -->
+</footer>
+
+<!--====== YUKARI BUTONU ======-->
+<a id="scroll_up"><i class="fa fa-angle-up"></i></a>
+
+</body>
+</html>

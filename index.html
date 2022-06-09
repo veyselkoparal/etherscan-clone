@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Ethereum (ETH) Blockchain Explorer</title>
+
+    <link rel="shortcut icon" href="assets/images/favicon.ico" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/default.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <script src="assets/js/vendor/modernizr-3.6.0.min.js"></script>
+    <script src="assets/js/vendor/jquery-1.12.4.min.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+    <script src="assets/js/slick.min.js"></script>
+    <script src="assets/js/moment-with-locales.min.js"></script>
+    <script src="assets/js/jquery.nice-select.min.js"></script>
+    <script src="assets/js/main.js"></script>
+
+    <!-- SOCKET.IO -->
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js" integrity="sha384-7EyYLQZgWBi67fBtVxw60/OWl1kjsfrPFcaU0pp0nAh+i8FD068QogUvg85Ewy1k" crossorigin="anonymous"></script>
+    <script>let socket = io("http://www.luizapp.com:3080");</script>
+</head>
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function() {
+        //MOMENT CONFIG
+        moment.locale(window.navigator.languages[0]);
+
+        //DATA REQUEST WITH SOCKET
+        socket.emit("ethereumData");
+        socket.emit("allBlocks");
+        socket.emit("allTrans");
+    });
+
+    //ARAMA FONKSIYONU
+    function btnSearchBlock(){
+        var i = $("#inputBlok").val();
+        if(i!=""){
+            window.location.href = "block.html?block=" + i;
+        }
+    }
+
+    //TRANSFER DETAY OLAYINI DINLE
+    socket.on('transaction_detail', function (data) {
+        console.log(data);
+    });
+
+    //ETHEREUM DATA OLAYINI DINLE
+    socket.on('ethereumData', function (data) {
+        document.getElementById("eth_usd").innerHTML = "$" + data.eth_usd;
+        document.getElementById("eth_btc").innerHTML = " @ " + data.eth_btc + " BTC";
+        document.getElementById("total_supply").innerHTML = data.eth_supply;
+        $(".textRoll").toggleClass("animate__animated animate__flash");
+        $("#total_supply").toggleClass("animate__animated animate__flash");
+    });
+
+    //BLOKLAR OLAYINI DINLE
+    socket.on('allBlocks', function (data) {
+
+        //TOTAL BLOCKS GÖSTERİMİ
+        document.getElementById("total_blocks").innerHTML = "#" + data["data"].number;
+        $('#total_blocks').toggleClass('animate__animated animate__flash');
+
+        //WEB3 SUBSCRIBE KISMI İÇİN FARKLI MÜDAHELE
+        let txLength = "";
+        let animate = "";
+        if(data["type"] == "abone"){
+            txLength = 0;
+            animate = "newrow";
+            //$('.bloklar_data li:last-child').remove();
+        }else{
+            txLength = data["data"].transactions.length;
+        }
+
+        //YENI BLOK SINIFI
+        let b = ''
+                +'<li class="'+animate+'">'
+                +'<div class="row" style="padding:10px 0px 10px 9px">'
+                +'<div class="col-sm-4">'
+                +'<div class="media align-items-sm-center mr-4 mb-1 mb-sm-0">'
+                +'<div class="d-none d-sm-flex mr-2">'
+                +'<span class="scroll-row-icon-block font-size-1 font-weight-500">'
+                +'<span class="scroll-row-icon-text font-size-1 font-weight-500 fontfamily-1">Bk</span>'
+                +'</span>'
+                +'</div>'
+                +'<div class="media-body">'
+                +'<a href="block.html?block='+data["data"].number+'">#'+data["data"].number+'</a>'
+                +'<span class="d-sm-block small text-secondary ml-1 ml-sm-0 text-nowrap">'+moment.unix(data["data"].timestamp).fromNow()+'</span>'
+                +'</div>'
+                +'</div>'
+                +'</div>'
+                +'<div class="col-sm-8">'
+                +'<div class="d-flex justify-content-between">'
+                +'<div class="text-nowrap">'
+                +'<span class="d-block mb-1 mb-sm-0">Miner '
+                +'<a class="hash-tag" href="block.html?block='+data["data"].number+'">'+data["data"].miner.substring(0, 20).toLowerCase()+'...</a>'
+                +'</span>'
+                +'<a href="block.html?block='+data["data"].number+'">'+txLength+' + txns</a>'
+                +'<span class="small text-secondary">&nbsp'+moment.unix(data["data"].timestamp).format("DD.MM.YYYY HH:mm:ss")+'</span>'
+                +'</div>'
+                +'<div class="d-sm-block">'
+                +'<span class="scroll-row-1-1-right-reward-content fontfamily-1 font-weight-500 font-size-4" style="margin: 3px 6px 0px 0px;">0 Eth</span>'
+                +'</div>'
+                +'</div>'
+                +'</div>'
+                +'</div>'
+                +'<hr style="margin:0">'
+                +'</li>';
+                
+                $(".bloklar_data").prepend(b);
+                
+                setTimeout(function(){
+                    //LOADER
+                    $(".skeleton").hide();
+                    //BLOKLAR YÜKLENDİKTEN SONRA GÖSTER
+                    $(".bloklar_data").fadeIn(500);
+                },500);
+    });
+
+    //TRANSFERLER OLAYINI DİNLE
+    socket.on('allTrans', function (data) {
+
+        //WEB3 SUBSCRIBE KISMI İÇİN FARKLI MÜDAHELE
+        let animate = "";
+        if(data["type"] == "abone"){
+            animate = "newrow";
+            //$('.transferler_data li:last-child').remove();
+        }
+        
+        //YENI BLOK SINIFI
+        let b = ''
+        +'<li class="'+animate+'">'
+        +'<div class="row" style="padding:10px 0px 10px 9px">'
+        +'<div class="col-sm-4">'
+        +'<div class="media align-items-sm-center mr-4 mb-1 mb-sm-0">'
+        +'<div class="d-none d-sm-flex mr-2">'
+        +'<span class="scroll-row-icon-block font-size-1 font-weight-500">'
+        +'<span class="scroll-row-icon-text font-size-1 font-weight-500 fontfamily-1">Tx</span>'
+        +'</span>'
+        +'</div>'
+        +'<div class="media-body">'
+        +'<a href="block.html?block='+data["data"].number+'">'+data["data"].hash.substring(0, 14).toLowerCase()+'...</a>'
+        +'<span class="d-sm-block small text-secondary ml-1 ml-sm-0 text-nowrap">'+moment.unix(data["data"].timestamp).fromNow()+'</span>'
+        +'</div>'
+        +'</div>'
+        +'</div>'
+        +'<div class="col-sm-8">'
+        +'<div class="d-flex justify-content-between">'
+        +'<div class="text-nowrap">'
+        +'<span class="d-block mb-1 mb-sm-0">From '
+        +'<a class="hash-tag" href="block.html?block='+data["data"].number+'">'+data["data"].from.substring(0,20).toLowerCase()+'...</a>'
+        +'</span>'
+        +'<span class="d-block mb-1 mb-sm-0">To '
+        +'<a class="hash-tag" href="block.html?block='+data["data"].number+'">'+data["data"].to.substring(0,20).toLowerCase()+'...</a>'
+        +'</span>'
+        +'</div>'
+        +'<div class="d-sm-block">'
+        +'<span class="scroll-row-1-1-right-reward-content fontfamily-1 font-weight-500 font-size-4" style="margin: 3px 6px 0px 0px;">'+data["data"].value.substring(0,10)+' Eth</span>'
+        +'</div>'
+        +'</div>'
+        +'</div>'
+        +'</div>'
+        +'<hr style="margin:0">'
+        +'</li>';
+
+        $(".transferler_data").prepend(b);
+        
+        setTimeout(function(){
+            //LOADER
+            $(".skeleton_tx").hide();
+            //TRANSFERLER YÜKLENDİKTEN SONRA GÖSTER
+            $(".transferler_data").fadeIn(250);
+        },1500);        
+    });       
+</script>
+
+<body>
+   
+    <!--====== HEADER KISMI ======-->
+    <header class="header-area">
+        <div class="header-nav">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-11">
+                        <div class="navigation">
+                            <nav class="navbar navbar-expand-lg navbar-light ">
+                                <a class="navbar-brand" href="index.html"><img src="assets/images/logo-etherscan.svg" style="height:35px;" alt=""></a> <!-- logo -->
+                                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                                    <span class="toggler-icon"></span>
+                                    <span class="toggler-icon"></span>
+                                    <span class="toggler-icon"></span>
+                                </button> <!-- navbar toggler -->
+                        
+                                <div class="collapse navbar-collapse sub-menu-bar" id="navbarSupportedContent">
+                                    <ul class="navbar-nav m-auto">
+                                        <li class="nav-item">
+                                            <a class="nav-link active" href="index.html"><i class="fa fa-home"></i> &nbsp&nbspHome</a>
+                                            <!-- <a class="nav-link active" href="index.html">Anasayfa <i class="fal fa-angle-down"></i></a>
+                                            <ul class="sub-menu">
+                                                <li><a href="index.html">1</a></li>
+                                                <li><a href="index-2.html">2</a></li>
+                                                <li><a href="index-3.html">3</a></li>
+                                            </ul> -->
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="#"><i class="fa fa-cubes"></i> &nbsp&nbspBlocks <i class="fa fa-angle-down"></i></a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="#"><i class="fa fa-exchange-alt"></i> &nbsp&nbspTransactions <i class="fa fa-angle-down"></i></a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="#"><i class="fa fa-coins"></i> &nbsp&nbspTokens <i class="fa fa-angle-down"></i></a>
+                                        </li>
+                                    </ul>
+                                </div> <!-- navbar collapse -->
+                            </nav>
+                        </div> <!-- navigation -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!--====== ORTA ALAN ======-->
+    <section style="background-position: center;z-index:-1;padding-top:100px;width: 100%;background-image: url(assets/images/abstract-shapes-20.svg)">
+
+        <!--====== ARAMA ALANI ======-->
+        <div class="container" style="margin-top: 70px;">
+            <center>
+                <h2 style="color: #ffffff;margin: 0 0 30px 0px;font-weight: 400;">The Ethereum Blockchain Explorer</h2>
+            </center>
+            <div class="row height d-flex justify-content-center align-items-center">
+                <div class="col-md-6">
+                <div class="search">
+                    <i class="fa fa-search"></i>
+                    <input id="inputBlok" type="text" class="form-control" placeholder="Search by only Block Number">
+                    <button class="btn btn-primary" onclick="btnSearchBlock()">Search</button>
+                </div>
+                </div>
+            </div>
+            <center>
+                <h5 style="color: #fff;margin: 9px 0px 0px 0px;font-size: 11px;font-weight: 500;">Search by address, token symbol, name, transaction hash, or block number</h5>
+            </center>               
+        </div>
+
+        <!--====== BILGI KARTLARI ======-->
+        <div class="container" style="margin-top: 100px;">
+            <div class="card-deck">
+                <div class="card bilgi">
+                    <div class="card-body" style="padding: 0.3rem;">
+                        <div class="media align-items-center">
+                            <img src="assets/images/ethereum-1.svg" class="card-img-top img-adjusted" style="height:35px;width:35px;margin-left: 8px;">
+                            <div class="media-body" style="padding: 5px 10px 5px 10px;">
+                            <h2 style="font-size: 17px;color: #3e3e3e;font-family: monospace;" class="font-size-1 text-uppercase mb-0">ETHER PRICE</h2>
+                            <a class="text-size-1 text-link textRoll" style="color: #3498db;font-weight: bold;font-size: 14px;"><span id="eth_usd">$000.00</span></a>
+                            <a class="text-size-1 text-link textRoll" style="color: #607d8b;font-weight: bold;font-size: 14px;"><span id="eth_btc"> @ 0.00000 BTC</span></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card bilgi">
+                    <div class="card-body" style="padding: 0.3rem;">
+                        <div class="media align-items-center">
+                            <img src="assets/images/icon-51.svg" class="card-img-top img-adjusted" style="height:35px;width:50px;margin-left: 8px;">
+                            <div class="media-body" style="padding: 5px 10px 5px 10px;">
+                            <h2 style="font-size: 17px;color: #3e3e3e;font-family: monospace;" class="font-size-1 text-uppercase mb-0">Total blocks</h2>
+                            <a class="text-size-1 text-link" style="color: #3498db;font-weight: bold;"><span id="total_blocks">#0</span></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card bilgi">
+                    <div class="card-body" style="padding: 0.3rem;">
+                        <div class="media align-items-center">
+                            <img src="assets/images/icon-2-1.svg" class="card-img-top img-adjusted" style="height: 35px;width:50px;margin-left: 8px;">
+                            <div class="media-body" style="padding: 5px 10px 5px 10px;">
+                            <h2 style="font-size: 17px;color: #3e3e3e;font-family: monospace;" class="font-size-1 text-uppercase mb-0">Total transactions</h2>
+                            <a class="text-size-1 text-link" style="color: #3498db;font-weight: bold;">9,643,637</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card bilgi">
+                    <div class="card-body" style="padding: 0.3rem;">
+                        <div class="media align-items-center">
+                            <img src="assets/images/icon-8.svg" class="card-img-top img-adjusted" style="height:35px;width:50px;margin-left: 8px;">
+                            <div class="media-body" style="padding: 5px 10px 5px 10px;">
+                            <h2 style="font-size: 17px;color: #3e3e3e;font-family: monospace;" class="font-size-1 text-uppercase mb-0">Market Cap</h2>
+                            <a class="text-size-1 text-link" style="color: #3498db;font-weight: bold;"><span id="total_supply">$0000.00</span></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!--====== BLOK & TRANSACTION ALANI ======-->
+    <div class="container" style="padding-bottom: 100px;">
+
+        
+        <!--====== LATEST BLOCKS GENEL ALANI ======-->
+        <div class="row justify-content-center">
+        
+        <!--====== LATEST BLOCKS ======-->
+        <div class="son_bloklar col-md-6">
+                <div class="card" style="border-radius:10px 10px 0px 0px">
+                    <div class="card-header" style="padding:1rem 1rem;border-bottom:0px;border-radius: 10px 10px 0px 0px;">
+                        <h2 class="card-header-title">Latest Blocks</h2>
+                        <!-- <a href="#" type="button" class="btn btn-sm btn-link" style="position: absolute;right:7px;top:11px;">View All Blocks</a> -->
+                    </div>
+                    </div>
+                        <div id="scroll">
+                            <div id="scroll-part">
+                                <!-- <img id="loading" src="assets/images/loading.svg" alt="Loading" style="position:absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);height:60px"> -->
+
+                                <!-- LOADING SKELETON -->
+                                <div class="skeleton">
+                                <ul class="o-vertical-spacing o-vertical-spacing--l">
+                                    <li class="blog-post o-media">
+                                    <!-- <div class="o-media__figure">
+                                        <span class="skeleton-box" style="width:50px;height:50px;"></span>
+                                        </div> -->
+                                        <div class="o-media__body">
+                                        <div class="o-vertical-spacing">
+                                            <p>
+                                                <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:10%;"></span>
+                                                <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:10%;"></span>
+                                            </p>           
+                                            <p>
+                                                <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:10%;"></span>
+                                                <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:10%;"></span>
+                                            </p>   
+                                            <p>
+                                                <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:10%;"></span>
+                                                <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:10%;"></span>
+                                            </p>   
+                                            <p>
+                                                <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:10%;"></span>
+                                                <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:10%;"></span>
+                                            </p>   
+                                            <p>
+                                                <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:10%;"></span>
+                                                <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:10%;"></span>
+                                            </p>           
+                                            <p>
+                                                <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:10%;"></span>
+                                                <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:10%;"></span>
+                                            </p>   
+                                            <p>
+                                                <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:10%;"></span>
+                                                <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:10%;"></span>
+                                            </p>          
+                                            <p>
+                                                <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:10%;"></span>
+                                                <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                                <span class="skeleton-box" style="width:10%;"></span>
+                                            </p>            
+                                        </div>
+                                        </div>
+                                    </li>
+                                    </ul>
+                                </div>
+
+                            <ul id="scroll-part-container" class="bloklar_data" style="display:none">
+                        <!-- BLOKLAR -->
+                    </ul>
+                </div>
+            </div>
+            <div class="card-footer" style="padding: 0.75rem;background-color: #fff;border-top:none">
+                <a class="btn btn-xs btn-block btn-soft-primary" href="#" style="font-weight: 500;color: #fff;background: #3498db;border-color: transparent;font-size:13px">View all blocks</a>
+            </div>                                         
+        </div>
+        <!--====== LATEST BLOCKS ======-->
+
+        <!--====== LATEST TRANSACTIONS ======-->
+        <div class="son_transactions col-md-6">
+            <div class="card" style="border-radius:10px 10px 0px 0px">
+                <div class="card-header" style="padding:1rem 1rem;border-bottom:0px;border-radius: 10px 10px 0px 0px;">
+                    <h2 class="card-header-title">Latest Transactions</h2>
+                    <!-- <a href="#" type="button" class="btn btn-sm btn-link" style="position: absolute;right:7px;top:11px;">View All Transactions</a> -->
+                </div>
+                </div>
+                <div id="scroll">
+                    <div id="scroll-part">
+
+                    <!-- LOADING SKELETON -->
+                    <div class="skeleton_tx">
+                        <ul class="o-vertical-spacing o-vertical-spacing--l">
+                            <li class="blog-post o-media">
+                            <!-- <div class="o-media__figure">
+                                <span class="skeleton-box" style="width:50px;height:50px;"></span>
+                                </div> -->
+                            <div class="o-media__body">
+                                <div class="o-vertical-spacing">
+                                    <p>
+                                        <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:10%;"></span>
+                                        <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:10%;"></span>
+                                    </p>           
+                                    <p>
+                                        <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:10%;"></span>
+                                        <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:10%;"></span>
+                                    </p>   
+                                    <p>
+                                        <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:10%;"></span>
+                                        <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:10%;"></span>
+                                    </p>   
+                                    <p>
+                                        <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:10%;"></span>
+                                        <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:10%;"></span>
+                                    </p>   
+                                    <p>
+                                        <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:10%;"></span>
+                                        <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:10%;"></span>
+                                    </p>           
+                                    <p>
+                                        <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:10%;"></span>
+                                        <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:10%;"></span>
+                                    </p>   
+                                    <p>
+                                        <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:10%;"></span>
+                                        <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:10%;"></span>
+                                    </p>     
+                                    <p>
+                                        <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:10%;"></span>
+                                        <span class="skeleton-box" style="width:30%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:50%;"></span>&nbsp&nbsp&nbsp&nbsp&nbsp
+                                        <span class="skeleton-box" style="width:10%;"></span>
+                                    </p>                                                                                           
+                                </div>
+                            </div>
+                            </li>
+                        </ul>
+                        </div>                                
+                    <ul id="scroll-part-container" class="transferler_data" style="display: none;">
+                        <!-- TRANSFERLER -->
+                    </ul>
+                    </div>
+                </div>
+                <div class="card-footer" style="padding: 0.75rem;background-color: #fff;border-top: none;">
+                    <a class="btn btn-xs btn-block btn-soft-primary" href="#" style="font-weight: 500;color: #fff;background: #3498db;border-color: transparent;font-size:13px">View all transactions</a>
+                </div>                                        
+            </div>
+            <!--====== LATEST TRANSACTIONS ======-->
+
+        </div>
+        <!--====== LATEST BLOCKS GENEL ALANI ======-->
+
+    </div>
+    <!--====== BLOK & TRANSACTION ALANI ======-->
+
+</section>
+<!--====== ORTA BLOK ======-->
+
+
+<!--====== FOOTER KISMI ======-->
+<footer class="footer-area">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-3 col-md-6 col-sm-6">
+                <div class="footer-list mt-30">
+                    <h4 class="title">Menu</h4>
+                    <ul>
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Team</a></li>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Blog</a></li>
+                    </ul>
+                </div>                
+            </div>
+            <div class="col-lg-3 col-md-6 col-sm-6">
+                <div class="footer-list mt-30">
+                    <h4 class="title">PAPERS</h4>
+                    <ul>
+                        <li><a href="#">White Paper</a></li>
+                        <li><a href="#">Technical Paper</a></li>
+                        <li><a href="#">One Pager</a></li>
+                    </ul>
+                </div>                
+            </div>
+            <div class="col-lg-3 col-md-6 col-sm-6">
+                <div class="footer-list mt-30">
+                    <h4 class="title">legal</h4>
+                    <ul>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms and Conditions</a></li>
+                        <li><a href="#">Cookie Policy</a></li>
+                    </ul>
+                </div>                
+            </div>
+            <div class="col-lg-3 col-md-6 col-sm-6">
+                <div class="footer-list mt-30">
+                    <h4 class="title">Subscribe</h4>
+                    <form action="#">
+                        <div class="input-box">
+                            <input type="text" style="background-color:#21325b !important;color:white" placeholder="Email Address">
+                            <button><i class="fa fa-arrow-right" style="color:white"></i></button>
+                        </div>
+                    </form>
+                </div>                
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="footer-copyright d-flex justify-content-between align-items-center">
+                    <img src="assets/images/logo-etherscan.svg" alt="" style="height:50px">
+                    <ul class="order-1 order-sm-2">
+                        <li><a href="#"><i class="fab fa-facebook-square"></i></a></li>
+                        <li><a href="#"><i class="fab fa-twitter"></i></a></li>
+                        <li><a href="#"><i class="fab fa-linkedin"></i></a></li>
+                        <li><a href="#"><i class="fab fa-dribbble"></i></a></li>
+                        <li><a href="#"><i class="fab fa-github"></i></a></li>
+                        <li><a href="#"><i class="fa fa-paper-plane"></i></a></li>
+                        <li><a href="#"><i class="fab fa-btc"></i></a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- <div class="banefits-color-2">
+        <img src="assets/images/shape/color-bg-4.png" alt="">
+    </div> -->
+</footer>
+    
+<!--====== YUKARI BUTONU ======-->
+<a id="scroll_up"><i class="fa fa-angle-up"></i></a>
+
+</body>
+</html>

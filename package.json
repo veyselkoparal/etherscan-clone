@@ -1,0 +1,26 @@
+{
+  "name": "metatimescan.io",
+  "version": "1.0.0",
+  "description": "<img src=\"https://metatime.com.tr/logo.png\" />",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/veyselkoparal/metatimescan.io.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/veyselkoparal/metatimescan.io/issues"
+  },
+  "homepage": "https://github.com/veyselkoparal/metatimescan.io#readme",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "dotenv": "^16.0.1",
+    "socket.io": "^4.5.1",
+    "web3": "^1.7.3"
+  }
+}
