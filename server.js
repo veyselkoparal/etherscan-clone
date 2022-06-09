@@ -56,14 +56,19 @@ let formatter = new Intl.NumberFormat('en-US', {
 
 //Ethereum Price Provider
 async function ethereumData(){
-    const eth_apiKey = process.env.ETHERSCAN_API_KEY;
-    const eth_endpoint = `https://api.etherscan.io/api`;
+    //const eth_apiKey = process.env.ETHERSCAN_API_KEY;
+    //const eth_endpoint = `https://api.etherscan.io/api`;
+    //const eth_supplies = await axios.get(eth_endpoint + `?module=stats&action=ethsupply&apikey=${eth_apiKey}`);
+    //let totalSupply = formatter.format(eth_supplies.data.result.replace(/^0+/,'').replace(/0+$/,''));
 
-    const eth_prices = await axios.get(eth_endpoint + `?module=stats&action=ethprice&apikey=${eth_apiKey}`);
-    const eth_supplies = await axios.get(eth_endpoint + `?module=stats&action=ethsupply&apikey=${eth_apiKey}`);
-    let { result } = eth_prices.data;
-    let totalSupply = formatter.format(eth_supplies.data.result.replace(/^0+/,'').replace(/0+$/,''));
-    io.sockets.emit('ethereumData', {eth_usd : result.ethusd, eth_btc: result.ethbtc, eth_supply: totalSupply});
+    const eth = await axios.get('https://etherchain.org/api/basic_stats');
+    let price_usd = eth.data.currentStats.price_usd;
+    let price_btc = eth.data.currentStats.price_btc;
+    let difficulty = (eth.data.currentStats.difficulty).toString();
+    let latestBlock = eth.data.blocks[0].number;
+    let hashrate = eth.data.currentStats.hashrate;
+    let difficulty2 = difficulty.slice(0,4);
+    io.sockets.emit('ethereumData', {eth_usd : price_usd, eth_btc: price_btc, eth_hashrate: hashrate, eth_latestblock: latestBlock, eth_difficulty: difficulty2});
 }
 
 //BLOCKS

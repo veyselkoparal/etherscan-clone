@@ -24,7 +24,7 @@
 
     <!-- SOCKET.IO -->
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js" integrity="sha384-7EyYLQZgWBi67fBtVxw60/OWl1kjsfrPFcaU0pp0nAh+i8FD068QogUvg85Ewy1k" crossorigin="anonymous"></script>
-    <script>let socket = io("http://www.luizapp.com:3080");</script>
+    <script>let socket = io(":3080");</script>
 </head>
 
 <script>
@@ -38,6 +38,19 @@
         socket.emit("allBlocks");
         socket.emit("allTrans");
     });
+
+    //SAYIYI VİRGÜLLE AYIRAN FONKSIYON
+    function addCommas(nStr) {
+        nStr += '';
+        var x = nStr.split('.');
+        var x1 = x[0];
+        var x2 = x.length > 1 ? '.' + x[1] : '';
+        var rgx = /(\d+)(\d{3})/;
+        while (rgx.test(x1)) {
+            x1 = x1.replace(rgx, '$1' + ',' + '$2');
+        }
+        return x1 + x2;
+    }    
 
     //ARAMA FONKSIYONU
     function btnSearchBlock(){
@@ -56,17 +69,17 @@
     socket.on('ethereumData', function (data) {
         document.getElementById("eth_usd").innerHTML = "$" + data.eth_usd;
         document.getElementById("eth_btc").innerHTML = " @ " + data.eth_btc + " BTC";
-        document.getElementById("total_supply").innerHTML = data.eth_supply;
+        document.getElementById("hashrate").innerHTML = addCommas(data.eth_hashrate);
+        document.getElementById("total_blocks").innerHTML = "#" + data.eth_latestblock;
+        document.getElementById("difficulty").innerHTML = data.eth_difficulty + " TH";
+        $('#total_blocks').toggleClass('animate__animated animate__flash');
         $(".textRoll").toggleClass("animate__animated animate__flash");
-        $("#total_supply").toggleClass("animate__animated animate__flash");
+        $("#hashrate").toggleClass("animate__animated animate__flash");
+        $("#difficulty").toggleClass("animate__animated animate__flash");
     });
 
     //BLOKLAR OLAYINI DINLE
     socket.on('allBlocks', function (data) {
-
-        //TOTAL BLOCKS GÖSTERİMİ
-        document.getElementById("total_blocks").innerHTML = "#" + data["data"].number;
-        $('#total_blocks').toggleClass('animate__animated animate__flash');
 
         //WEB3 SUBSCRIBE KISMI İÇİN FARKLI MÜDAHELE
         let txLength = "";
@@ -270,7 +283,7 @@
                         <div class="media align-items-center">
                             <img src="assets/images/icon-51.svg" class="card-img-top img-adjusted" style="height:35px;width:50px;margin-left: 8px;">
                             <div class="media-body" style="padding: 5px 10px 5px 10px;">
-                            <h2 style="font-size: 17px;color: #3e3e3e;font-family: monospace;" class="font-size-1 text-uppercase mb-0">Total blocks</h2>
+                            <h2 style="font-size: 17px;color: #3e3e3e;font-family: monospace;" class="font-size-1 text-uppercase mb-0">Latest block</h2>
                             <a class="text-size-1 text-link" style="color: #3498db;font-weight: bold;"><span id="total_blocks">#0</span></a>
                             </div>
                         </div>
@@ -281,8 +294,8 @@
                         <div class="media align-items-center">
                             <img src="assets/images/icon-2-1.svg" class="card-img-top img-adjusted" style="height: 35px;width:50px;margin-left: 8px;">
                             <div class="media-body" style="padding: 5px 10px 5px 10px;">
-                            <h2 style="font-size: 17px;color: #3e3e3e;font-family: monospace;" class="font-size-1 text-uppercase mb-0">Total transactions</h2>
-                            <a class="text-size-1 text-link" style="color: #3498db;font-weight: bold;">9,643,637</a>
+                            <h2 style="font-size: 17px;color: #3e3e3e;font-family: monospace;" class="font-size-1 text-uppercase mb-0">Difficulty</h2>
+                            <a class="text-size-1 text-link" style="color: #3498db;font-weight: bold;" id="difficulty">0</a>
                             </div>
                         </div>
                     </div>
@@ -292,8 +305,8 @@
                         <div class="media align-items-center">
                             <img src="assets/images/icon-8.svg" class="card-img-top img-adjusted" style="height:35px;width:50px;margin-left: 8px;">
                             <div class="media-body" style="padding: 5px 10px 5px 10px;">
-                            <h2 style="font-size: 17px;color: #3e3e3e;font-family: monospace;" class="font-size-1 text-uppercase mb-0">Market Cap</h2>
-                            <a class="text-size-1 text-link" style="color: #3498db;font-weight: bold;"><span id="total_supply">$0000.00</span></a>
+                            <h2 style="font-size: 17px;color: #3e3e3e;font-family: monospace;" class="font-size-1 text-uppercase mb-0">Hashrate</h2>
+                            <a class="text-size-1 text-link" style="color: #3498db;font-weight: bold;"><span id="hashrate">0</span></a>
                             </div>
                         </div>
                     </div>
