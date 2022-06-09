@@ -20,6 +20,7 @@ Bu projeyi çalıştırmak için aşağıdaki ortam değişkenlerini .env dosyan
 
 
 `ETHERSCAN_API_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
+
 `INFURA_API_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
 ## Yükleme
 
