@@ -6,9 +6,6 @@
 
 Etherscan, Ethereum ağı için bir blockchain gezginidir. Web sitesi; işlemler, bloklar, cüzdan adresleri, akıllı sözleşmeler ve diğer zincir üstü veriler arasında arama yapmanıza imkan tanır. En popüler Ethereum blockchain gezginlerinden biridir ve ücretsiz olarak kullanılabilir.
 
-
-## Demo
-http://www.luizapp.com/etherscan
 ## Ekran Görüntüleri
 
 ![Uygulama Ekran Görüntüsü](http://www.luizapp.com/etherscan/etherscan.jpg)
